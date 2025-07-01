@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Service PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: filrouge-postgres
+    environment:
+      POSTGRES_DB: filrouge
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - filrouge-network
+
+  # Service Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: filrouge-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/filrouge
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - filrouge-network
+
+  # Service Frontend Angular
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: filrouge-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - filrouge-network
+
+networks:
+  filrouge-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
